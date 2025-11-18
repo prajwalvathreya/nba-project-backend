@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
+from fastapi.exceptions import ResponseValidationError
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from contextlib import asynccontextmanager
@@ -9,7 +10,7 @@ from dotenv import load_dotenv
 # Import modules
 from app.database import initialize_database_on_startup, test_database_connection, get_database_stats
 from app.auth import initialize_auth_on_startup, get_token_info, auth_config
-from app.routers import auth, fixtures, groups, predictions
+from app.routers import auth, fixtures, groups, predictions, leaderboard
 
 # Load environment variables from .env file
 load_dotenv()
@@ -69,6 +70,7 @@ app.include_router(auth.router)
 app.include_router(fixtures.router)
 app.include_router(groups.router)
 app.include_router(predictions.router) 
+app.include_router(leaderboard.router)
 
 @app.get("/")
 async def root():
@@ -170,14 +172,33 @@ async def not_found_handler(request, exc):
         }
     )
 
-@app.exception_handler(500)
-async def internal_error_handler(request, exc):
-    """Handle 500 errors"""
-    logger.error(f"Internal server error: {exc}")
+@app.exception_handler(ResponseValidationError)
+async def response_validation_error_handler(request, exc):
+    """Handle response validation errors (our code returned wrong format)"""
+    logger.error(f"Response validation error: {exc}")
     return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
+        status_code=500,
+        content={"detail": "Internal server error"}
     )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    """Handle all other exceptions"""
+    logger.error(f"Internal server error: {exc}")
+    
+    # Check if it has status_code and detail attributes
+    if hasattr(exc, 'status_code') and hasattr(exc, 'detail'):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail}
+        )
+    
+    # Otherwise return generic 500
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"}
+    )
+
 
 if __name__ == "__main__":
     # Run the application

@@ -101,6 +101,15 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Execute leaderboard_procedures.sql
+echo "Creating/updating leaderboard procedures..."
+mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME < leaderboard_procedures.sql
+
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to create leaderboard procedures"
+    exit 1
+fi
+
 echo ""
 echo "=========================================="
 echo "Database setup completed successfully!"
