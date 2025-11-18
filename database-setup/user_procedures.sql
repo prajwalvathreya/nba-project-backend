@@ -1,4 +1,4 @@
--- -- This file contains stored procedures for managing users and database utilities
+-- -- This script contains stored procedures for managing users and database utilities
 USE nba_db;
 
 -- Drop existing procedures to avoid conflicts

@@ -1,4 +1,4 @@
--- -- This SQL script contains stored procedures for managing groups in the database
+-- -- This script contains stored procedures for managing groups
 USE nba_db;
 
 -- Drop existing procedures if they exist
