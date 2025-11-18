@@ -2,13 +2,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from contextlib import asynccontextmanager
+from fastapi.responses import JSONResponse
 import uvicorn
 from dotenv import load_dotenv
 
 # Import modules
 from app.database import initialize_database_on_startup, test_database_connection, get_database_stats
 from app.auth import initialize_auth_on_startup, get_token_info, auth_config
-from app.routers import auth
+from app.routers import auth, fixtures
 
 # Load environment variables from .env file
 load_dotenv()
@@ -63,8 +64,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers - FIXED: Use correct syntax
+# Include routers
 app.include_router(auth.router)
+app.include_router(fixtures.router)
 
 @app.get("/")
 async def root():
@@ -157,21 +159,23 @@ async def api_info():
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
     """Handle 404 errors"""
-    return {
-        "error": "Not Found",
-        "message": "The requested endpoint was not found",
-        "suggestion": "Check /docs for available endpoints"
-    }
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Not Found",
+            "message": "The requested endpoint was not found",
+            "suggestion": "Check /docs for available endpoints"
+        }
+    )
 
 @app.exception_handler(500)
 async def internal_error_handler(request, exc):
     """Handle 500 errors"""
     logger.error(f"Internal server error: {exc}")
-    return {
-        "error": "Internal Server Error", 
-        "message": "An unexpected error occurred",
-        "suggestion": "Check /health for system status"
-    }
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
 
 if __name__ == "__main__":
     # Run the application
