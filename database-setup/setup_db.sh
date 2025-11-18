@@ -92,6 +92,15 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Execute prediction_procedures.sql
+echo "Creating/updating prediction procedures..."
+mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME < prediction_procedures.sql
+
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to create prediction procedures"
+    exit 1
+fi
+
 echo ""
 echo "=========================================="
 echo "Database setup completed successfully!"
@@ -104,7 +113,6 @@ fi
 echo "  Created Database: $DB_NAME"
 echo "  Created Tables"
 echo "  Created Functions"
+echo "  Created Procedures"
 echo "  Created Triggers"
-echo "  Created User procedures"
-echo "  Created Fixture procedures"
 echo "=========================================="

@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # Import modules
 from app.database import initialize_database_on_startup, test_database_connection, get_database_stats
 from app.auth import initialize_auth_on_startup, get_token_info, auth_config
-from app.routers import auth, fixtures, groups
+from app.routers import auth, fixtures, groups, predictions
 
 # Load environment variables from .env file
 load_dotenv()
@@ -68,6 +68,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(fixtures.router)
 app.include_router(groups.router)
+app.include_router(predictions.router) 
 
 @app.get("/")
 async def root():
