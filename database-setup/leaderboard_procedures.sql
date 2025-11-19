@@ -1,5 +1,4 @@
 -- This SQL script defines stored procedures for managing and retrieving leaderboard data
-USE nba_db;
 
 -- Drop existing procedures if they exist
 DROP PROCEDURE IF EXISTS get_group_leaderboard;

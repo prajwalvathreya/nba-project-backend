@@ -1,5 +1,4 @@
 -- -- This file contains stored procedures for managing fixtures
-USE nba_db;
 
 -- Drop existing procedures to avoid conflicts
 DROP PROCEDURE IF EXISTS insert_fixture;

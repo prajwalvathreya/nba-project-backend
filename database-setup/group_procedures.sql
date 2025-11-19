@@ -1,5 +1,4 @@
 -- -- This script contains stored procedures for managing groups
-USE nba_db;
 
 -- Drop existing procedures if they exist
 DROP PROCEDURE IF EXISTS create_group;

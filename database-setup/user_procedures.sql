@@ -1,5 +1,4 @@
 -- -- This script contains stored procedures for managing users and database utilities
-USE nba_db;
 
 -- Drop existing procedures to avoid conflicts
 DROP PROCEDURE IF EXISTS test_database_connection;

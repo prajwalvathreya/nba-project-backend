@@ -1,5 +1,4 @@
 -- This SQL script contains triggers for certain database operations
-USE nba_db;
 
 -- Drop existing triggers to avoid conflicts
 DROP TRIGGER IF EXISTS before_group_insert;

@@ -1,5 +1,4 @@
 -- -- This SQL script contains functions for doing various operations regarding groups, predictions and scoring
-USE nba_db;
 
 -- Drop existing functions to avoid conflicts
 DROP FUNCTION IF EXISTS generate_group_code;

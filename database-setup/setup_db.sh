@@ -115,11 +115,10 @@ echo "=========================================="
 echo "Database setup completed successfully!"
 echo "=========================================="
 if [ "$DB_EXISTS" = "$DB_NAME" ]; then
-    echo "Updated existing database:"
+    echo "  Updated Database: $DB_NAME"
 else
-    echo "Created new database:"
+    echo "  Created Database: $DB_NAME"
 fi
-echo "  Created Database: $DB_NAME"
 echo "  Created Tables"
 echo "  Created Functions"
 echo "  Created Procedures"

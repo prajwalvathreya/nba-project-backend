@@ -1,5 +1,4 @@
 -- -- This script defines stored procedures for managing predictions
-USE nba_db;
 
 -- Drop existing procedures if they exist
 DROP PROCEDURE IF EXISTS create_prediction;

@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS Fixture (
     INDEX idx_completed (completed),
     INDEX idx_api_game (api_game_id),
     INDEX idx_season (season),
-    INDEX idx_fixture_completion (completed, start_time)  -- Moved here
+    INDEX idx_fixture_completion (completed, start_time)
 );
 
 -- 5. Prediction Table
