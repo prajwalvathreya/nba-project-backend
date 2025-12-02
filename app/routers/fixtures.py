@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import APIRouter, HTTPException, status, Query
 from typing import List
 from app.models.fixture import FixtureResponse
@@ -52,6 +53,23 @@ async def get_upcoming_fixtures(
             detail="Failed to fetch fixtures"
         )
 
+
+@router.get("/past", response_model=List[FixtureResponse])
+async def get_fixtures_up_to_today():
+    """
+    Get all fixtures up to and including today.
+    Returns all fixtures scheduled on or before today's date.
+    """
+    try:
+        today = date.today()
+        fixtures = FixtureService.get_fixtures_up_to_date(today)
+        return fixtures
+    except DatabaseError as e:
+        logger.error(f"Failed to fetch fixtures up to today: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch fixtures up to today"
+        )
 
 @router.get("/{match_num}", response_model=FixtureResponse)
 async def get_fixture(match_num: int):

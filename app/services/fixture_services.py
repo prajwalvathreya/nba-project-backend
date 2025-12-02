@@ -128,3 +128,37 @@ class FixtureService:
         except Exception as e:
             logger.error(f"Unexpected error fetching fixture {match_num}: {e}")
             raise DatabaseError(f"Failed to fetch fixture {match_num}: {str(e)}")
+    
+    @staticmethod
+    def get_fixtures_up_to_date(to_date) -> List[Dict[str, Any]]:
+        """
+        Get all fixtures scheduled on or before the given date.
+        Args:
+            to_date: date object (YYYY-MM-DD)
+        Returns:
+            List[Dict]: List of fixtures
+        Raises:
+            DatabaseError: If database operation fails
+        """
+        try:
+            result = call_procedure('get_fixtures_up_to_date', [to_date])
+            if not result:
+                logger.info(f"No fixtures found up to {to_date}")
+                return []
+            # Add game_date and game_time fields from start_time for Pydantic compatibility
+            for fixture in result:
+                if 'start_time' in fixture and fixture['start_time']:
+                    fixture['game_date'] = fixture['start_time'].date()
+                    fixture['game_time'] = fixture['start_time'].time()
+                else:
+                    fixture['game_date'] = None
+                    fixture['game_time'] = None
+            result = FixtureService._convert_timedelta_to_time(result)
+            logger.info(f"Found {len(result)} fixtures up to {to_date}")
+            return result
+        except DatabaseError as e:
+            logger.error(f"Failed to fetch fixtures up to {to_date}: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error fetching fixtures up to {to_date}: {e}")
+            raise DatabaseError(f"Failed to fetch fixtures up to {to_date}: {str(e)}")

@@ -7,6 +7,7 @@ DROP PROCEDURE IF EXISTS get_season_stats;
 DROP PROCEDURE IF EXISTS get_next_fixtures;
 DROP PROCEDURE IF EXISTS get_upcoming_fixtures;
 DROP PROCEDURE IF EXISTS get_fixture_by_id;
+DROP PROCEDURE IF EXISTS get_fixtures_up_to_date;
 
 -- Procedure to insert or update fixtures
 DELIMITER $$
@@ -234,5 +235,18 @@ BEGIN
     FROM Fixture
     WHERE match_num = p_match_num;
 END$$
+
+DELIMITER ;
+
+-- Procedure to get fixtures up to a specific date
+DELIMITER $$
+
+CREATE PROCEDURE get_fixtures_up_to_date(IN in_to_date DATE)
+BEGIN
+    SELECT *
+    FROM Fixture
+    WHERE DATE(start_time) <= in_to_date
+    ORDER BY DATE(start_time) ASC, TIME(start_time) ASC;
+END $$
 
 DELIMITER ;
