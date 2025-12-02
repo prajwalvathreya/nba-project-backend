@@ -83,126 +83,69 @@ async def get_my_rank(
         )
 
 
-# ============================================================================
+# ====================================================
 # ADMIN ENDPOINTS (Fixture Management)
-# ============================================================================
-
-@router.post("/admin/fixtures/{fixture_id}/complete", response_model=FixtureCompleteResponse)
-async def complete_fixture(
-    fixture_id: int = Path(..., gt=0, description="Fixture ID"),
-    scores: FixtureComplete = ...,
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    Complete a fixture and trigger automatic scoring (ADMIN ONLY).
-    
-    - **fixture_id**: The fixture's unique identifier
-    - **home_score**: Final home team score
-    - **away_score**: Final away team score
-    
-    This endpoint:
-    1. Marks the fixture as completed
-    2. Automatically calculates points for all predictions
-    3. Updates all affected group leaderboards
-    4. Recalculates rankings
-    
-    Note: This is an admin-only operation. In production, add proper admin authorization.
-    """
-    try:
-        completed_fixture = LeaderboardService.complete_fixture(
-            fixture_id=fixture_id,
-            home_score=scores.home_score,
-            away_score=scores.away_score
-        )
-        
-        logger.info(
-            f"Admin {current_user['username']} completed fixture {fixture_id}: "
-            f"{scores.home_score}-{scores.away_score}"
-        )
-        return completed_fixture
-        
-    except DatabaseError as e:
-        error_msg = str(e)
-        
-        # Handle specific errors
-        if "not found" in error_msg.lower():
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Fixture not found"
-            )
-        elif "already completed" in error_msg.lower():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Fixture is already completed. Use update endpoint to correct scores."
-            )
-        else:
-            logger.error(f"Failed to complete fixture: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to complete fixture"
-            )
+#=====================================================
 
 
 @router.put("/admin/fixtures/{fixture_id}/scores", response_model=FixtureCompleteResponse)
-async def update_fixture_scores(
+async def upsert_fixture_scores(
     fixture_id: int = Path(..., gt=0, description="Fixture ID"),
     scores: FixtureScoreUpdate = ...,
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Update scores for an already-completed fixture (ADMIN ONLY).
-    
+    Update the scores for a fixture (ADMIN ONLY).
     - **fixture_id**: The fixture's unique identifier
-    - **home_score**: Corrected home team score
-    - **away_score**: Corrected away team score
-    
-    Use this endpoint to correct scores after initial completion.
-    This will:
-    1. Update the fixture scores
-    2. Recalculate points for all predictions
-    3. Update all affected group leaderboards
-    4. Recalculate rankings
-    
-    Note: This is an admin-only operation. In production, add proper admin authorization.
+    - **home_score**: Final home team score
+    - **away_score**: Final away team score
+
+    Automatically recalculates points and rankings as needed.
     """
     try:
-        updated_fixture = LeaderboardService.update_fixture_scores(
-            fixture_id=fixture_id,
-            home_score=scores.home_score,
-            away_score=scores.away_score
+        # Try to complete the fixture (works for both new and already-completed)
+        try:
+            result = LeaderboardService.complete_fixture(
+                fixture_id=fixture_id,
+                home_score=scores.home_score,
+                away_score=scores.away_score
+            )
+            logger.info(
+                f"Admin {current_user['username']} set fixture {fixture_id} scores: "
+                f"{scores.home_score}-{scores.away_score}"
+            )
+            return result
+        except DatabaseError as e:
+            error_msg = str(e)
+            # If already completed, update the scores
+            if "already completed" in error_msg.lower():
+                result = LeaderboardService.update_fixture_scores(
+                    fixture_id=fixture_id,
+                    home_score=scores.home_score,
+                    away_score=scores.away_score
+                )
+                logger.info(
+                    f"Admin {current_user['username']} updated fixture {fixture_id} scores: "
+                    f"{scores.home_score}-{scores.away_score}"
+                )
+                return result
+            elif "not found" in error_msg.lower():
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Fixture not found"
+                )
+            else:
+                logger.error(f"Failed to set/update fixture scores: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to set/update fixture scores"
+                )
+    except Exception as e:
+        logger.error(f"Unexpected error in upsert_fixture_scores: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unexpected error occurred"
         )
-        
-        logger.info(
-            f"Admin {current_user['username']} updated fixture {fixture_id} scores: "
-            f"{scores.home_score}-{scores.away_score}"
-        )
-        return updated_fixture
-        
-    except DatabaseError as e:
-        error_msg = str(e)
-        
-        # Handle specific errors
-        if "not found" in error_msg.lower():
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Fixture not found"
-            )
-        elif "not completed" in error_msg.lower():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Fixture is not completed yet. Use complete endpoint instead."
-            )
-        elif "same as current" in error_msg.lower():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="New scores are the same as current scores"
-            )
-        else:
-            logger.error(f"Failed to update fixture scores: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update fixture scores"
-            )
 
 
 @router.post("/admin/recalculate", response_model=LeaderboardRecalculateResponse)
