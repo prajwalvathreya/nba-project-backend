@@ -162,3 +162,33 @@ class FixtureService:
         except Exception as e:
             logger.error(f"Unexpected error fetching fixtures up to {to_date}: {e}")
             raise DatabaseError(f"Failed to fetch fixtures up to {to_date}: {str(e)}")
+    @staticmethod
+    def get_last_updated_fixture() -> Optional[Dict[str, Any]]:
+        """
+        Get the most recently updated fixture.
+        
+        Returns:
+            Dict: Fixture data or None if not found
+            
+        Raises:
+            DatabaseError: If database operation fails
+        """
+        try:
+            result = call_procedure('get_last_updated_fixture', [])
+            
+            if not result:
+                logger.info("No fixtures found")
+                return None
+            
+            # Convert timedelta to time
+            result = FixtureService._convert_timedelta_to_time(result)
+            
+            logger.info("Found last updated fixture")
+            return result[0]
+            
+        except DatabaseError as e:
+            logger.error(f"Failed to fetch last updated fixture: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error fetching last updated fixture: {e}")
+            raise DatabaseError(f"Failed to fetch last updated fixture: {str(e)}")

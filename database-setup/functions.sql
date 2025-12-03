@@ -45,7 +45,7 @@ BEGIN
 END$$
 DELIMITER ;
 
--- Function to calculate prediction points (example scoring system)
+-- Function to calculate prediction points
 DELIMITER $$
 CREATE FUNCTION calculate_prediction_points(
     pred_home INT, 

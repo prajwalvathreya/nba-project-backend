@@ -8,6 +8,8 @@ DROP PROCEDURE IF EXISTS get_next_fixtures;
 DROP PROCEDURE IF EXISTS get_upcoming_fixtures;
 DROP PROCEDURE IF EXISTS get_fixture_by_id;
 DROP PROCEDURE IF EXISTS get_fixtures_up_to_date;
+DROP PROCEDURE IF EXISTS get_last_updated_fixture;
+DROP PROCEDURE IF EXISTS get_next_fixtures_with_user_predictions;
 
 -- Procedure to insert or update fixtures
 DELIMITER $$
@@ -249,4 +251,56 @@ BEGIN
     ORDER BY DATE(start_time) ASC, TIME(start_time) ASC;
 END $$
 
+DELIMITER ;
+
+-- Procedure to get the last updated fixture
+DELIMITER $$
+CREATE PROCEDURE get_last_updated_fixture()
+BEGIN
+    SELECT *
+    FROM Fixture
+    WHERE completed = 1
+    ORDER BY start_time DESC
+    LIMIT 1;
+END$$
+
+DELIMITER ;
+
+-- Procedure to get upcoming fixtures at next immediate game date with user predictions
+DELIMITER $$
+CREATE PROCEDURE get_next_fixtures_with_user_predictions(
+    IN p_user_id INT
+)
+BEGIN
+    -- Find the next date with games
+    DECLARE next_game_date DATE;
+    SELECT MIN(DATE(start_time)) INTO next_game_date
+    FROM Fixture
+    WHERE DATE(start_time) >= CURDATE();
+
+    -- Return only fixtures for that date with a prediction by the user, showing user's predicted scores
+    SELECT 
+        f.match_num,
+        f.home_team,
+        f.away_team,
+        p.pred_home_score AS home_score,
+        p.pred_away_score AS away_score,
+        f.completed,
+        f.start_time,
+        DATE(f.start_time) AS game_date,
+        TIME(f.start_time) AS game_time,
+        p.pid AS prediction_id,
+        p.pred_home_score,
+        p.pred_away_score,
+        p.prediction_time,
+        p.locked,
+        p.points_earned
+    FROM Fixture f
+    INNER JOIN (
+        SELECT * FROM Prediction
+        WHERE user_id = p_user_id
+    ) p ON f.match_num = p.fixture_id
+    WHERE DATE(f.start_time) = next_game_date
+    ORDER BY f.start_time ASC;
+END$$
 DELIMITER ;

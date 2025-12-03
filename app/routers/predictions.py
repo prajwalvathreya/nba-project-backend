@@ -68,32 +68,25 @@ async def create_prediction(
             )
 
 
+
 @router.get("/me", response_model=List[PredictionResponse])
 async def get_my_predictions(
-    group_id: Optional[int] = Query(None, description="Filter by group ID"),
+    min_match_num: Optional[int] = Query(None, description="Minimum match number (inclusive)"),
+    max_match_num: Optional[int] = Query(None, description="Maximum match number (inclusive)"),
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Get all predictions for the current user.
-    
-    - **group_id** (optional): Filter predictions by specific group
-    
-    If group_id is provided, returns predictions for that group only.
-    If not provided, returns all predictions across all groups.
+    Get all predictions for the current user, optionally filtered by match number range.
+    - **min_match_num**: Only include predictions for fixtures with match_num >= this value
+    - **max_match_num**: Only include predictions for fixtures with match_num <= this value
     """
     try:
-        if group_id:
-            predictions = PredictionService.get_user_predictions(
-                user_id=current_user['user_id'],
-                group_id=group_id
-            )
-        else:
-            predictions = PredictionService.get_all_user_predictions(
-                user_id=current_user['user_id']
-            )
-        
+        predictions = PredictionService.get_user_predictions_by_match_range(
+            user_id=current_user['user_id'],
+            min_match_num=min_match_num,
+            max_match_num=max_match_num
+        )
         return predictions
-        
     except DatabaseError as e:
         logger.error(f"Failed to fetch user predictions: {e}")
         raise HTTPException(

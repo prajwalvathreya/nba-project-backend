@@ -8,6 +8,7 @@ DROP PROCEDURE IF EXISTS get_fixture_predictions;
 DROP PROCEDURE IF EXISTS get_prediction_by_id;
 DROP PROCEDURE IF EXISTS update_prediction;
 DROP PROCEDURE IF EXISTS delete_prediction;
+DROP PROCEDURE IF EXISTS get_user_predictions_by_match_range;
 
 -- Create Prediction
 DELIMITER $$
@@ -306,4 +307,46 @@ BEGIN
     SELECT ROW_COUNT() as deleted_count;
 END$$
 
+DELIMITER ;
+
+-- Get User's Predictions by Match Number Range (for pagination)
+DELIMITER $$
+CREATE PROCEDURE get_user_predictions_by_match_range(
+    IN p_user_id INT,
+    IN p_min_match_num INT,
+    IN p_max_match_num INT
+)
+BEGIN
+    SELECT 
+        p.pid,
+        p.user_id,
+        p.group_id,
+        p.fixture_id,
+        p.pred_home_score,
+        p.pred_away_score,
+        p.prediction_time,
+        p.locked,
+        p.points_earned,
+        f.home_team,
+        f.away_team,
+        f.start_time,
+        f.completed,
+        f.home_score AS actual_home_score,
+        f.away_score AS actual_away_score,
+        DATE(f.start_time) AS game_date,
+        TIME(f.start_time) AS game_time
+    FROM Prediction p
+    INNER JOIN Fixture f ON p.fixture_id = f.match_num
+    INNER JOIN (
+        SELECT fixture_id, MAX(prediction_time) AS max_time
+        FROM Prediction
+        WHERE user_id = p_user_id
+          AND fixture_id BETWEEN p_min_match_num AND p_max_match_num
+        GROUP BY fixture_id
+    ) latest ON p.fixture_id = latest.fixture_id AND p.prediction_time = latest.max_time
+    WHERE p.user_id = p_user_id
+      AND f.match_num >= p_min_match_num
+      AND f.match_num <= p_max_match_num
+    ORDER BY f.match_num DESC;
+END$$
 DELIMITER ;
