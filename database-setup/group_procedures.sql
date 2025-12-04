@@ -108,24 +108,25 @@ DELIMITER ;
 -- Join Group (by group code)
 DELIMITER $$
 
+
 CREATE PROCEDURE join_group(
     IN p_user_id INT,
     IN p_group_code VARCHAR(6)
 )
 BEGIN
     DECLARE v_group_id INT;
-    
+
     -- Find group by code
     SELECT group_id INTO v_group_id
     FROM `Group`
     WHERE group_code = p_group_code;
-    
+
     -- Check if group exists
     IF v_group_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Group not found with that code';
     END IF;
-    
+
     -- Check if user is already in the group
     IF EXISTS (
         SELECT 1 FROM UserGroups 
@@ -134,7 +135,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'User is already a member of this group';
     END IF;
-    
+
     -- Add user to group (trigger will create leaderboard entry)
     INSERT INTO UserGroups (user_id, group_id)
     VALUES (p_user_id, v_group_id);
@@ -142,7 +143,7 @@ BEGIN
     -- Recalculate all leaderboards to update points and ranks
     CALL recalculate_all_leaderboards();
 
-    -- Return the group info
+    -- Return the group info as the LAST statement
     SELECT 
         g.group_id,
         g.group_code,

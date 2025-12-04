@@ -153,7 +153,12 @@ async def get_all_teams():
     """
     try:
         teams = FixtureService.get_all_teams()
-        return teams
+        # Filter out teams where team_name is None, empty, or only whitespace
+        filtered_teams = [
+            team for team in teams
+            if team.get('team_name') and team.get('team_name').strip()
+        ]
+        return filtered_teams
     except DatabaseError as e:
         logger.error(f"Failed to fetch team names: {e}")
         raise HTTPException(

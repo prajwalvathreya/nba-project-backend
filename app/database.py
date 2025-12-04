@@ -178,8 +178,12 @@ def call_procedure(procedure_name: str, params: list = None):
                 cursor.callproc(procedure_name)
                 
             result = cursor.fetchall()
+            # Advance to the last result set if there are multiple
+            while cursor.nextset():
+                temp = cursor.fetchall()
+                if temp:
+                    result = temp
             logger.info(f"Procedure '{procedure_name}' executed successfully, returned {len(result)} rows")
-            
             return result
             
     except pymysql.Error as e:

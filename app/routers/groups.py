@@ -64,7 +64,8 @@ async def join_group(
             group_code=join_data.group_code
         )
         
-        logger.info(f"User {current_user['username']} joined group {group['group_name']}")
+        logger.info(f"group returned: {group}")
+        logger.info(f"User {current_user['username']} joined group {group.get('group_name')}")
         return group
         
     except DatabaseError as e:
