@@ -138,7 +138,10 @@ BEGIN
     -- Add user to group (trigger will create leaderboard entry)
     INSERT INTO UserGroups (user_id, group_id)
     VALUES (p_user_id, v_group_id);
-    
+
+    -- Recalculate all leaderboards to update points and ranks
+    CALL recalculate_all_leaderboards();
+
     -- Return the group info
     SELECT 
         g.group_id,

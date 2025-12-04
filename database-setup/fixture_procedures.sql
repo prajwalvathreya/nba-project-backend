@@ -10,6 +10,7 @@ DROP PROCEDURE IF EXISTS get_fixture_by_id;
 DROP PROCEDURE IF EXISTS get_fixtures_up_to_date;
 DROP PROCEDURE IF EXISTS get_last_updated_fixture;
 DROP PROCEDURE IF EXISTS get_next_fixtures_with_user_predictions;
+DROP PROCEDURE IF EXISTS get_teams;
 
 -- Procedure to insert or update fixtures
 DELIMITER $$
@@ -302,5 +303,19 @@ BEGIN
     ) p ON f.match_num = p.fixture_id
     WHERE DATE(f.start_time) = next_game_date
     ORDER BY f.start_time ASC;
+END$$
+DELIMITER ;
+
+-- Procedure to get all teams
+DELIMITER $$
+CREATE PROCEDURE get_teams()
+BEGIN
+    SELECT 
+        team_id,
+        team_name,
+        city,
+        abbreviation
+    FROM Teams
+    ORDER BY team_name ASC;
 END$$
 DELIMITER ;

@@ -153,16 +153,83 @@ class NBAFixtureImporter:
             print(f"Database error during bulk insert: {e}")
             return False
     
-    def verify_import(self, season='2025-26'):
-        """Verify the import using stored procedure"""
+    def insert_teams(self, fixtures_data):
+        """Extract unique teams from fixtures and insert into Teams table"""
+        if not self.connection:
+            print("No database connection!")
+            return False
+
+        # Clear the Teams table and reset auto-increment
         try:
             cursor = self.connection.cursor()
-            
-            # Use stored procedure to get season statistics
+            cursor.execute("DELETE FROM Teams;")
+            cursor.execute("ALTER TABLE Teams AUTO_INCREMENT = 1;")
+            cursor.close()
+            print("Cleared Teams table and reset AUTO_INCREMENT.")
+        except Exception as e:
+            print(f"Error clearing Teams table: {e}")
+            return False
+
+        # Extract unique teams from fixtures
+        teams = {}
+        for fixture in fixtures_data:
+            for team_key in ['home_team', 'away_team']:
+                team = fixture.get(team_key)
+                if team:
+                    team_name = f"{team['city']} {team['name']}"
+                    abbreviation = team.get('tricode', '')
+                    city = team['city']
+                    # Use team_name as key to avoid duplicates
+                    teams[team_name] = {
+                        'team_name': team_name,
+                        'city': city,
+                        'abbreviation': abbreviation
+                    }
+
+        successful_inserts = 0
+        failed_inserts = 0
+
+        try:
+            for team in teams.values():
+                try:
+                    cursor = self.connection.cursor()
+                    cursor.execute(
+                        """
+                        INSERT INTO Teams (team_name, city, abbreviation)
+                        VALUES (%s, %s, %s)
+                        ON DUPLICATE KEY UPDATE city=VALUES(city), abbreviation=VALUES(abbreviation)
+                        """,
+                        (team['team_name'], team['city'], team['abbreviation'])
+                    )
+                    cursor.close()
+                    successful_inserts += 1
+                except Exception as e:
+                    print(f"Error inserting team {team['team_name']}: {e}")
+                    failed_inserts += 1
+                    continue
+
+            # Commit the transaction to save changes
+            self.connection.commit()
+
+            print(f"\nTeams Import Summary:")
+            print(f"Successfully inserted: {successful_inserts} teams")
+            print(f"Failed insertions: {failed_inserts}")
+            print(f"Total processed: {len(teams)}")
+            return successful_inserts > 0
+        except Exception as e:
+            print(f"Database error during teams insert: {e}")
+            return False
+
+
+    def verify_import(self, season='2025-26'):
+        """Verify the import using stored procedure and check Teams table"""
+        try:
+            # Fixtures/season stats
+            cursor = self.connection.cursor()
             cursor.callproc('get_season_stats', [season])
             stats = cursor.fetchone()
             cursor.close()
-            
+
             # Get sample fixtures
             cursor = self.connection.cursor()
             cursor.execute("""
@@ -174,18 +241,31 @@ class NBAFixtureImporter:
             """, [season])
             sample_fixtures = cursor.fetchall()
             cursor.close()
-            
+
             print(f"\nImport Verification for {season} season:")
             print(f"Total fixtures in database: {stats['total_fixtures']}")
             print(f"Completed games: {stats['completed_games']}")
             print(f"Upcoming games: {stats['upcoming_games']}")
             print(f"Season runs from: {stats['first_game']} to {stats['last_game']}")
-            
+
             print(f"\nSample fixtures:")
             for fixture in sample_fixtures:
                 status = "COMPLETED" if fixture['completed'] else "UPCOMING"
                 print(f"{status}: {fixture['home_team']} vs {fixture['away_team']} - {fixture['start_time']}")
-            
+
+            # Teams table check
+            cursor = self.connection.cursor()
+            cursor.execute("SELECT COUNT(*) as team_count FROM Teams")
+            team_count = cursor.fetchone()['team_count']
+            cursor.execute("SELECT team_id, team_name, city, abbreviation FROM Teams ORDER BY team_name LIMIT 5")
+            sample_teams = cursor.fetchall()
+            cursor.close()
+
+            print(f"\nTeams table: {team_count} teams found.")
+            print("Sample teams:")
+            for team in sample_teams:
+                print(f"{team['team_id']}: {team['team_name']} ({team['abbreviation']}) - {team['city']}")
+
         except Exception as e:
             print(f"Error verifying import: {e}")
 
@@ -221,25 +301,28 @@ def main():
     
     # Create importer instance
     importer = NBAFixtureImporter(db_config)
-    
+
     try:
         # Connect to database
         if not importer.connect_db():
             sys.exit(1)
-        
+
         # Load JSON data
         fixtures_data = importer.load_json_file(json_file_path)
         if not fixtures_data:
             sys.exit(1)
-        
+
+        # Insert teams into Teams table
+        success = importer.insert_teams(fixtures_data)
+
         # Import fixtures
         print(f"\nStarting import of {len(fixtures_data)} fixtures...")
-        
-        # Ask user if they want to clear existing data
-        clear_existing = input("\nClear existing fixtures for 2025-26 season? (y/N): ").lower().strip() == 'y'
-        
-        success = importer.insert_fixtures(fixtures_data, clear_existing=clear_existing)
-        
+
+        # # Ask user if they want to clear existing data
+        # clear_existing = input("\nClear existing fixtures for 2025-26 season? (y/N): ").lower().strip() == 'y'
+
+        # success = importer.insert_fixtures(fixtures_data, clear_existing=clear_existing)
+
         if success:
             # Verify the import
             importer.verify_import()
@@ -247,7 +330,7 @@ def main():
         else:
             print(f"\nImport failed!")
             sys.exit(1)
-    
+
     except KeyboardInterrupt:
         print(f"\nImport cancelled by user")
     except Exception as e:

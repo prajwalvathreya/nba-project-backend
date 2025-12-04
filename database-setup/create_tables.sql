@@ -91,22 +91,12 @@ CREATE TABLE IF NOT EXISTS Leaderboard (
     INDEX idx_user (user_id)
 );
 
--- Sample data for testing (uncomment to use)
-/*
-INSERT INTO User (username, email, password) VALUES 
-('john_doe', 'john@example.com', '$2b$12$hashed_password_here'),
-('jane_smith', 'jane@example.com', '$2b$12$another_hashed_password');
-
--- Group codes will be auto-generated
-INSERT INTO `Group` (group_name, creator_id) VALUES 
-('Friends League', 1),
-('Office Predictions', 2);
-
--- Sample fixtures (you'll populate these from NBA API)
-INSERT INTO Fixture (home_team, away_team, start_time, api_game_id) VALUES 
-('Lakers', 'Warriors', '2025-10-21 19:30:00', 12345),
-('Celtics', 'Heat', '2025-10-21 20:00:00', 12346);
-*/
-
--- Show all created tables
-SHOW TABLES;
+-- 7. Teams Table
+CREATE TABLE IF NOT EXISTS Teams (
+    team_id INT PRIMARY KEY AUTO_INCREMENT,
+    team_name VARCHAR(50) NOT NULL UNIQUE,
+    city VARCHAR(50) DEFAULT NULL,
+    abbreviation VARCHAR(5) DEFAULT NULL,
+    INDEX idx_team_name (team_name),
+    INDEX idx_city (city)
+);

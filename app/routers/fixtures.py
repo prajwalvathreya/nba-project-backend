@@ -1,7 +1,7 @@
 from datetime import date, timedelta, time
 from fastapi import APIRouter, HTTPException, status, Query, Depends
 from typing import List
-from app.models.fixture import FixtureResponse, FixtureWithUserPredictionResponse
+from app.models.fixture import FixtureResponse, TeamsResponse
 from app.services.fixture_services import FixtureService
 from app.database import DatabaseError
 from app.models.prediction import PredictionResponse
@@ -143,6 +143,22 @@ async def get_next_fixtures_merged_with_predictions(current_user: dict = Depends
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch merged fixtures with predictions"
+        )
+
+@router.get("/allteams", response_model=List[TeamsResponse])
+async def get_all_teams():
+    """
+    Get a list of all team names.
+    Returns a list of all unique team names in the database.
+    """
+    try:
+        teams = FixtureService.get_all_teams()
+        return teams
+    except DatabaseError as e:
+        logger.error(f"Failed to fetch team names: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch team names"
         )
 
 
