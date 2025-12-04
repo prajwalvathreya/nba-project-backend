@@ -1,9 +1,7 @@
 from typing import Optional, Dict, Any
 import logging
-from datetime import datetime, timezone
-
 from app.database import call_procedure, DatabaseError
-from app.auth import PasswordManager, TokenManager, create_login_response
+from app.auth import PasswordManager, create_login_response
 from app.models.user import UserCreate, UserResponse, LoginRequest, LoginResponse, TokenData
 
 logger = logging.getLogger(__name__)

@@ -90,13 +90,3 @@ CREATE TABLE IF NOT EXISTS Leaderboard (
     INDEX idx_group_points (group_id, total_points DESC),
     INDEX idx_user (user_id)
 );
-
--- 7. Teams Table
-CREATE TABLE IF NOT EXISTS Teams (
-    team_id INT PRIMARY KEY AUTO_INCREMENT,
-    team_name VARCHAR(50) NOT NULL UNIQUE,
-    city VARCHAR(50) DEFAULT NULL,
-    abbreviation VARCHAR(5) DEFAULT NULL,
-    INDEX idx_team_name (team_name),
-    INDEX idx_city (city)
-);

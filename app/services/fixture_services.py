@@ -192,26 +192,3 @@ class FixtureService:
         except Exception as e:
             logger.error(f"Unexpected error fetching last updated fixture: {e}")
             raise DatabaseError(f"Failed to fetch last updated fixture: {str(e)}")
-    @staticmethod
-    def get_all_teams() -> List[Dict[str, Any]]:
-        """
-        Get all teams from the database.
-        
-        Returns:
-            List[Dict]: List of teams
-        Raises:
-            DatabaseError: If database operation fails
-        """
-        try:
-            result = call_procedure('get_teams', [])
-            if not result:
-                logger.info("No teams found")
-                return []
-            logger.info(f"Found {len(result)} teams")
-            return result
-        except DatabaseError as e:
-            logger.error(f"Failed to fetch teams: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error fetching teams: {e}")
-            raise DatabaseError(f"Failed to fetch teams: {str(e)}")

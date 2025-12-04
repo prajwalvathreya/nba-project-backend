@@ -22,16 +22,3 @@ class FixtureResponse(BaseModel):
             date: lambda v: v.isoformat(),
             time: lambda v: v.isoformat()
         }
-
-class TeamsResponse(BaseModel):
-    """Response model for list of team names"""
-    team_id: int
-    team_name: str
-    city: str
-    abbreviation: str
-    
-    class Config:
-        from_attributes = True
-        json_encoders = {
-            list: lambda v: v
-        }

@@ -3,7 +3,6 @@ from typing import List
 from app.models.leaderboard import (
     LeaderboardEntry,
     UserRankResponse,
-    FixtureComplete,
     FixtureScoreUpdate,
     FixtureCompleteResponse,
     LeaderboardRecalculateResponse
