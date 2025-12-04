@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS Prediction (
     INDEX idx_prediction_time (prediction_time)
 );
 
+-- 6. Leaderboard Table
 CREATE TABLE IF NOT EXISTS Leaderboard (
     user_id INT NOT NULL,
     group_id INT NOT NULL,
