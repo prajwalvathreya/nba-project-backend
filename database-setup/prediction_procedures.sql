@@ -9,6 +9,8 @@ DROP PROCEDURE IF EXISTS get_prediction_by_id;
 DROP PROCEDURE IF EXISTS update_prediction;
 DROP PROCEDURE IF EXISTS delete_prediction;
 DROP PROCEDURE IF EXISTS get_user_predictions_by_match_range;
+DROP PROCEDURE IF EXISTS get_user_stats;
+DROP PROCEDURE IF EXISTS get_top_users_by_predictions;
 
 -- Create Prediction
 DELIMITER $$
@@ -350,3 +352,19 @@ BEGIN
     ORDER BY f.match_num DESC;
 END$$
 DELIMITER ;
+
+-- UserStats Procedures
+DELIMITER $$
+
+CREATE PROCEDURE get_user_stats(IN p_user_id INT)
+BEGIN
+    SELECT * FROM UserStats WHERE user_id = p_user_id;
+END$$
+
+CREATE PROCEDURE get_top_users_by_predictions()
+BEGIN
+    SELECT user_id, total_predictions, correct_predictions, exact_score_predictions
+    FROM UserStats
+    ORDER BY total_predictions DESC
+    LIMIT 10;
+END$$

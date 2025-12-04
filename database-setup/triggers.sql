@@ -8,6 +8,9 @@ DROP TRIGGER IF EXISTS before_prediction_update;
 DROP TRIGGER IF EXISTS before_prediction_delete;
 DROP TRIGGER IF EXISTS before_fixture_update;
 DROP TRIGGER IF EXISTS after_fixture_complete;
+DROP TRIGGER IF EXISTS after_prediction_insert_stats;
+DROP TRIGGER IF EXISTS after_prediction_update_stats;
+DROP TRIGGER IF EXISTS after_prediction_delete_stats;
 
 -- ============================================================================
 -- GROUP TRIGGERS
@@ -194,3 +197,45 @@ BEGIN
     END IF;
 END$$
 DELIMITER ;
+
+-- ====================================
+-- USER STATS TRIGGERS
+-- ====================================
+DELIMITER $$
+
+-- After insert on Prediction: increment total_predictions
+CREATE TRIGGER after_prediction_insert_stats
+AFTER INSERT ON Prediction
+FOR EACH ROW
+BEGIN
+    INSERT INTO UserStats (user_id, total_predictions)
+    VALUES (NEW.user_id, 1)
+    ON DUPLICATE KEY UPDATE total_predictions = total_predictions + 1;
+END$$
+
+-- After update on Prediction: increment correct_predictions and exact_score_predictions
+CREATE TRIGGER after_prediction_update_stats
+AFTER UPDATE ON Prediction
+FOR EACH ROW
+BEGIN
+    IF NEW.points_earned > 0 AND (OLD.points_earned IS NULL OR OLD.points_earned = 0) THEN
+        UPDATE UserStats
+        SET correct_predictions = correct_predictions + 1
+        WHERE user_id = NEW.user_id;
+    END IF;
+    IF NEW.points_earned = 10 AND (OLD.points_earned IS NULL OR OLD.points_earned != 10) THEN
+        UPDATE UserStats
+        SET exact_score_predictions = exact_score_predictions + 1
+        WHERE user_id = NEW.user_id;
+    END IF;
+END$$
+
+-- After delete on Prediction: decrement total_predictions
+CREATE TRIGGER after_prediction_delete_stats
+AFTER DELETE ON Prediction
+FOR EACH ROW
+BEGIN
+    UPDATE UserStats
+    SET total_predictions = total_predictions - 1
+    WHERE user_id = OLD.user_id;
+END$$

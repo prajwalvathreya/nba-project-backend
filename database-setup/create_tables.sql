@@ -77,7 +77,6 @@ CREATE TABLE IF NOT EXISTS Prediction (
     INDEX idx_prediction_time (prediction_time)
 );
 
--- 6. Leaderboard Table
 CREATE TABLE IF NOT EXISTS Leaderboard (
     user_id INT NOT NULL,
     group_id INT NOT NULL,
@@ -89,4 +88,23 @@ CREATE TABLE IF NOT EXISTS Leaderboard (
     FOREIGN KEY (group_id) REFERENCES `Group`(group_id) ON DELETE CASCADE,
     INDEX idx_group_points (group_id, total_points DESC),
     INDEX idx_user (user_id)
+);
+
+-- 7. UserStats Table
+CREATE TABLE IF NOT EXISTS UserStats (
+    stats_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    total_predictions INT DEFAULT 0,
+    correct_predictions INT DEFAULT 0,
+    exact_score_predictions INT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_stats (user_id)
+);
+
+-- 8. Profile
+CREATE TABLE IF NOT EXISTS Profile (
+    profile_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    bio VARCHAR(255) DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
 );
